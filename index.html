@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      background: linear-gradient(to bottom right, #3498db, #2ecc71);
+      color: #fff;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      color: #fff;
+      font-size: 3em;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 5px;
+      margin-top: 20px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      border: 2px solid #fff;
+      font-size: 2em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #000; /* Text color is black */
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .cell:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .bold-colorful {
+      font-weight: bold;
+      color: #000; /* Black color for X */
+    }
+
+    .bold-colorful-o {
+      font-weight: bold;
+      color: #fff; /* White color for O */
+    }
+
+    .celebration-message {
+      display: none;
+      font-size: 2em;
+      font-weight: bold;
+      animation: celebrate 2s ease-out;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1;
+    }
+
+    .popup-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .popup-button {
+      background: #3498db;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    @keyframes celebrate {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.2);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+  </style>
+  <title>Tic Tac Toe</title>
+</head>
+<body>
+
+  <h1>Tic Tac Toe</h1>
+
+  <div id="board"></div>
+  <div id="celebration-message" class="celebration-message"></div>
+  <div id="popup" class="popup">
+    <div class="popup-content">
+      <p>New game! <span id="popup-winner-message"></span></p>
+      <button class="popup-button" onclick="startNewGame()">New Game</button>
+    </div>
+  </div>
+
+  <script>
+    // Initialize the game board
+    const board = document.getElementById('board');
+    const celebrationMessage = document.getElementById('celebration-message');
+    const popup = document.getElementById('popup');
+    const popupWinnerMessage = document.getElementById('popup-winner-message');
+    let currentPlayer = 'X';
+    let gameBoard = ['', '', '', '', '', '', '', '', ''];
+    let gameActive = true;
+    let lastWinner = null;
+
+    function checkWinner() {
+      const winPatterns = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+        [0, 4, 8], [2, 4, 6]             // Diagonals
+      ];
+
+      for (const pattern of winPatterns) {
+        const [a, b, c] = pattern;
+        if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+          return true; // We have a winner
+        }
+      }
+
+      return false; // No winner yet
+    }
+
+    function checkDraw() {
+      return !gameBoard.includes(''); // It's a draw if there are no empty cells
+    }
+
+    function handleCellClick(index) {
+      if (!gameActive || gameBoard[index] !== '') {
+        return; // Cell already filled or game over
+      }
+
+      gameBoard[index] = currentPlayer;
+      renderBoard();
+
+      if (checkWinner()) {
+        celebrationMessage.textContent = `Player ${currentPlayer} wins! 🎉`;
+        celebrationMessage.style.color = currentPlayer === 'X' ? '#000' : '#fff'; // Black for X, White for O
+        celebrationMessage.style.display = 'block';
+        lastWinner = currentPlayer;
+        setTimeout(() => {
+          celebrationMessage.style.display = 'none';
+          showPopup();
+        }, 3000);
+      } else if (checkDraw()) {
+        celebrationMessage.textContent = "It's a draw! 😊";
+        celebrationMessage.style.color = '#000';
+        celebrationMessage.style.display = 'block';
+        lastWinner = null;
+        setTimeout(() => {
+          celebrationMessage.style.display = 'none';
+          restartGame();
+        }, 3000);
+      } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      }
+    }
+
+    function renderBoard() {
+      board.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        if (gameBoard[i] === 'X') {
+          cell.classList.add('bold-colorful');
+        } else if (gameBoard[i] === 'O') {
+          cell.classList.add('bold-colorful-o');
+        }
+        cell.textContent = gameBoard[i];
+        cell.addEventListener('click', () => handleCellClick(i));
+        board.appendChild(cell);
+      }
+    }
+
+    function showPopup() {
+      popupWinnerMessage.textContent = lastWinner ? `Old game won by Player ${lastWinner}` : 'No winner in the old game';
+      popup.style.display = 'flex';
+    }
+
+    function startNewGame() {
+      closePopup();
+      restartGame();
+    }
+
+    function closePopup() {
+      popup.style.display = 'none';
+    }
+
+    function restartGame() {
+      gameBoard = ['', '', '', '', '', '', '', '', ''];
+      currentPlayer = 'X';
+      gameActive = true;
+      renderBoard();
+    }
+
+    // Initialize the board on page load
+    renderBoard();
+  </script>
+
+</body>
+</html>
